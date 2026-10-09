@@ -54,15 +54,27 @@ function loadVehicleModel(spec){
  const url=spec.modelUrl||MODEL_BASE+spec.model+'.glb';
  if(!modelCache.has(url))modelCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,g=>{
   const root=g.scene;
-  const candidates=root.children.filter(n=>{const b=new THREE.Box3().setFromObject(n);const z=b.getSize(new THREE.Vector3());return z.x>0.05&&z.y>0.05&&z.z>0.05;});
-  root.userData.vehicleCandidates=candidates.length?candidates:[root];
-  resolve(root);
+  root.updateMatrixWorld(true);
+  const all=[];
+  root.traverse(n=>{if(n.isMesh)all.push(n);});
+  if(!all.length){reject(new Error('GLB загружен, но в сцене нет mesh'));return;}
+  // Prefer a named vehicle group if the pack exposes vehicle names. Otherwise use the
+  // complete scene instead of mistakenly selecting one arbitrary wheel/body part.
+  const keys={
+   0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad','off-road'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']
+  }[spec.modelIndex]||[];
+  let match=null;
+  root.traverse(n=>{
+   if(match||!n.name)return;
+   const name=n.name.toLowerCase().replace(/[_-]+/g,' ');
+   if(keys.some(k=>name.includes(k))){const b=new THREE.Box3().setFromObject(n);const z=b.getSize(new THREE.Vector3());if(z.x>.3&&z.y>.2&&z.z>.3)match=n;}
+  });
+  console.info('[Passenger pack]',{meshes:all.length,topLevel:root.children.length,names:root.children.map(n=>n.name),selected:match?.name||'full scene'});
+  resolve({root,match});
  },undefined,reject)));
- return modelCache.get(url).then(root=>{
-  const candidates=root.userData.vehicleCandidates||[root];
-  return candidates[Math.min(spec.modelIndex||0,candidates.length-1)]||root;
- });
+ return modelCache.get(url).then(pack=>pack.match||pack.root);
 }
+
 function buildCar(spec,headlights=false){
  const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
  const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
