@@ -103,35 +103,9 @@ function buildCar(spec,headlights=false){
  for(const x of [-w*.34,w*.34]){cube(placeholder,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(placeholder,w*.15,.09,.035,rear,x,h*.42,l*.472)}
  modelRoot.add(placeholder);
  if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xe8f2ff,65,105,Math.PI/6,.62,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-38);g.add(spot,spot.target)}}
- loadVehicleModel(spec).then(source=>{
-  const model=source.clone(true);
-  // Preserve the source model's proportions; rotate models whose long axis is X.
-  model.updateMatrixWorld(true);
-  let box=new THREE.Box3().setFromObject(model);
-  let size=box.getSize(new THREE.Vector3());
-  if(!size.x||!size.y||!size.z)throw new Error('GLB has empty geometry');
-  // Normalize common source orientations, preserving proportions and fitting the car to its slot.
-  if(size.x>size.z){model.rotation.y=Math.PI/2;model.updateMatrixWorld(true);}
-  model.updateMatrixWorld(true);
-  box=new THREE.Box3().setFromObject(model);
-  size=box.getSize(new THREE.Vector3());
-  const scale=Math.min(spec.l/Math.max(size.x,size.z),spec.h/Math.max(size.y,0.001));
-  model.scale.setScalar(scale);
-  model.updateMatrixWorld(true);
-  box=new THREE.Box3().setFromObject(model);
-  const center=box.getCenter(new THREE.Vector3());
-  model.position.x-=center.x;
-  model.position.y-=box.min.y;
-  model.position.z-=center.z;
-  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=mats.map(m=>{const clone=m.clone();clone.side=THREE.DoubleSide;return clone;});if(!Array.isArray(o.material))o.material=o.material[0];}}});
-  // Remove placeholder only after the uploaded GLB variant loads successfully.
-  const modelBounds=new THREE.Box3().setFromObject(model);
-  const modelSize=modelBounds.getSize(new THREE.Vector3());
-  if(modelSize.x<.25||modelSize.y<.15||modelSize.z<.25)throw new Error('Vehicle model bounds are invalid: '+modelSize.toArray());
-  modelRoot.add(model);
-  // Keep the fallback car visible until the imported pack is verified in-browser.
-  console.info('[vehicle loaded; fallback retained]',{name:spec.name,meshes:modelSize.toArray(),children:model.children.length});
- }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
+ // Stable fallback vehicle is the rendered car. The imported pack stays disabled until its internal layout is verified.
+ // This avoids replacing a visible vehicle with a wrongly assembled GLB scene.
+
  return g;
 }
 function init(){
