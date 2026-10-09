@@ -77,15 +77,17 @@ function buildCar(spec,headlights=false){
  const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
  const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
  const w=spec.w,l=spec.l,h=spec.h,wh=h*.125,wy=wh*1.05;
- // Placeholder is replaced by the real CC0 GLB when it finishes loading.
- cube(modelRoot,w*.90,h*.26,l*.89,body,0,h*.30,0);
- cube(modelRoot,w*.73,h*.34,l*.42,body,0,h*.68,l*.015);
- cube(modelRoot,w*.66,h*.23,l*.35,glass,0,h*.69,l*.015);
+ // Temporary placeholder remains visible until the GLB has loaded successfully.
+ const placeholder=new THREE.Group();
+ cube(placeholder,w*.90,h*.26,l*.89,body,0,h*.30,0);
+ cube(placeholder,w*.73,h*.34,l*.42,body,0,h*.68,l*.015);
+ cube(placeholder,w*.66,h*.23,l*.35,glass,0,h*.69,l*.015);
  for(const z of [-l*.32,l*.32])for(const x of [-w*.49,w*.49]){
-  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);modelRoot.add(tire);
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);modelRoot.add(hub);
+  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);placeholder.add(tire);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);placeholder.add(hub);
  }
- for(const x of [-w*.34,w*.34]){cube(modelRoot,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(modelRoot,w*.15,.09,.035,rear,x,h*.42,l*.472)}
+ for(const x of [-w*.34,w*.34]){cube(placeholder,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(placeholder,w*.15,.09,.035,rear,x,h*.42,l*.472)}
+ modelRoot.add(placeholder);
  if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xe8f2ff,65,105,Math.PI/6,.62,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-38);g.add(spot,spot.target)}}
  loadVehicleModel(spec).then(source=>{
   const model=source.clone(true);
@@ -93,14 +95,13 @@ function buildCar(spec,headlights=false){
   model.updateMatrixWorld(true);
   let box=new THREE.Box3().setFromObject(model);
   let size=box.getSize(new THREE.Vector3());
-  if(!size.x||!size.y||!size.z)return;
-  if(size.x>size.z){model.rotation.y=Math.PI/2;model.updateMatrixWorld(true);box=new THREE.Box3().setFromObject(model);size=box.getSize(new THREE.Vector3());}
-  // Keep the car facing down the road; avoid non-uniform scaling that squashes the body.
-  model.rotation.y+=Math.PI;
+  if(!size.x||!size.y||!size.z)throw new Error('GLB has empty geometry');
+  // Normalize common source orientations, preserving proportions and fitting the car to its slot.
+  if(size.x>size.z){model.rotation.y=Math.PI/2;model.updateMatrixWorld(true);}
   model.updateMatrixWorld(true);
   box=new THREE.Box3().setFromObject(model);
   size=box.getSize(new THREE.Vector3());
-  const scale=spec.l/Math.max(size.x,size.z);
+  const scale=Math.min(spec.l/Math.max(size.x,size.z),spec.h/Math.max(size.y,0.001));
   model.scale.setScalar(scale);
   model.updateMatrixWorld(true);
   box=new THREE.Box3().setFromObject(model);
@@ -110,7 +111,7 @@ function buildCar(spec,headlights=false){
   model.position.z-=center.z;
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=mats.map(m=>{const clone=m.clone();clone.side=THREE.DoubleSide;return clone;});if(!Array.isArray(o.material))o.material=o.material[0];}}});
   modelRoot.clear();modelRoot.add(model);
- }).catch(err=>console.warn('Could not load CC0 vehicle model:',spec.model,err));
+ }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
 }
 function init(){
