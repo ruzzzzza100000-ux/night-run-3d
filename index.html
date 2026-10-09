@@ -30,16 +30,16 @@ import * as THREE from 'three';
 const $=id=>document.getElementById(id);
 const PACK_URL='./generic_passenger_car_pack.glb';
 const cars=[
-{name:'Compact',year:'PASSENGER PACK',type:'Compact',color:'#397db2',w:1.75,l:3.8,h:1.45,modelIndex:0,modelUrl:PACK_URL},
-{name:'Coupe',year:'PASSENGER PACK',type:'Coupe',color:'#7c8fa7',w:1.85,l:4.25,h:1.35,modelIndex:1,modelUrl:PACK_URL},
-{name:'Hatchback',year:'PASSENGER PACK',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.05,h:1.5,modelIndex:2,modelUrl:PACK_URL},
-{name:'Minivan',year:'PASSENGER PACK',type:'Minivan',color:'#b8b8b8',w:1.9,l:4.6,h:1.9,modelIndex:3,modelUrl:PACK_URL},
-{name:'Offroad',year:'PASSENGER PACK',type:'Offroad',color:'#7f898b',w:2,l:4.5,h:1.9,modelIndex:4,modelUrl:PACK_URL},
-{name:'Pickup',year:'PASSENGER PACK',type:'Pickup',color:'#a7a69d',w:2,l:5,h:1.9,modelIndex:5,modelUrl:PACK_URL},
-{name:'Sedan',year:'PASSENGER PACK',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,modelIndex:6,modelUrl:PACK_URL},
-{name:'Sport',year:'PASSENGER PACK',type:'Sport',color:'#d74b42',w:1.9,l:4.3,h:1.3,modelIndex:7,modelUrl:PACK_URL},
-{name:'SUV',year:'PASSENGER PACK',type:'SUV',color:'#9b9f9d',w:1.95,l:4.5,h:1.8,modelIndex:8,modelUrl:PACK_URL},
-{name:'Wagon',year:'PASSENGER PACK',type:'Wagon',color:'#839b79',w:1.85,l:4.7,h:1.55,modelIndex:9,modelUrl:PACK_URL}
+{name:'Compact',year:'CITY CLASS',type:'Compact',color:'#397db2',w:1.75,l:3.8,h:1.45,modelIndex:0,modelUrl:PACK_URL},
+{name:'Coupe',year:'CITY CLASS',type:'Coupe',color:'#7c8fa7',w:1.85,l:4.25,h:1.35,modelIndex:1,modelUrl:PACK_URL},
+{name:'Hatchback',year:'CITY CLASS',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.05,h:1.5,modelIndex:2,modelUrl:PACK_URL},
+{name:'Minivan',year:'CITY CLASS',type:'Minivan',color:'#b8b8b8',w:1.9,l:4.6,h:1.9,modelIndex:3,modelUrl:PACK_URL},
+{name:'Offroad',year:'CITY CLASS',type:'Offroad',color:'#7f898b',w:2,l:4.5,h:1.9,modelIndex:4,modelUrl:PACK_URL},
+{name:'Pickup',year:'CITY CLASS',type:'Pickup',color:'#a7a69d',w:2,l:5,h:1.9,modelIndex:5,modelUrl:PACK_URL},
+{name:'Sedan',year:'CITY CLASS',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,modelIndex:6,modelUrl:PACK_URL},
+{name:'Sport',year:'CITY CLASS',type:'Sport',color:'#d74b42',w:1.9,l:4.3,h:1.3,modelIndex:7,modelUrl:PACK_URL},
+{name:'SUV',year:'CITY CLASS',type:'SUV',color:'#9b9f9d',w:1.95,l:4.5,h:1.8,modelIndex:8,modelUrl:PACK_URL},
+{name:'Wagon',year:'CITY CLASS',type:'Wagon',color:'#839b79',w:1.85,l:4.7,h:1.55,modelIndex:9,modelUrl:PACK_URL}
 ];
 let selected=0,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
 const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
@@ -48,24 +48,38 @@ function material(color,roughness=.5,metalness=.15,emissive=0){return new THREE.
 function cube(p,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
 // Vehicle rendering uses built-in procedural geometry for a reliable baseline.
 function buildCar(spec,headlights=false){
- const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
- const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
- const w=spec.w,l=spec.l,h=spec.h,wh=h*.125,wy=wh*1.05;
- // Temporary placeholder remains visible until the GLB has loaded successfully.
- const placeholder=new THREE.Group();
- cube(placeholder,w*.90,h*.26,l*.89,body,0,h*.30,0);
- cube(placeholder,w*.73,h*.34,l*.42,body,0,h*.68,l*.015);
- cube(placeholder,w*.66,h*.23,l*.35,glass,0,h*.69,l*.015);
- for(const z of [-l*.32,l*.32])for(const x of [-w*.49,w*.49]){
-  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);placeholder.add(tire);
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);placeholder.add(hub);
+ const g=new THREE.Group();
+ const body=material(spec.color,.24,.42),glass=material('#101b29',.13,.28),rubber=material('#101216',.9),metal=material('#9da9b5',.24,.85),front=material('#eaf4ff',.12,.05,0xc7e6ff),rear=material('#e92330',.2,.15,0xff101a),trim=material('#222a34',.42,.35);
+ const w=spec.w,l=spec.l,h=spec.h,wh=h*.125,wy=wh*1.08;
+ // Smooth ellipsoids replace the old box-shaped placeholder.
+ const shell=new THREE.Mesh(new THREE.SphereGeometry(1,28,18),body);
+ shell.scale.set(w*.49,h*.205,l*.49);shell.position.set(0,h*.285,0);shell.castShadow=true;shell.receiveShadow=true;g.add(shell);
+ const hood=new THREE.Mesh(new THREE.SphereGeometry(1,24,14),body);
+ hood.scale.set(w*.455,h*.12,l*.235);hood.position.set(0,h*.37,-l*.255);hood.castShadow=true;g.add(hood);
+ const deck=new THREE.Mesh(new THREE.SphereGeometry(1,24,14),body);
+ deck.scale.set(w*.445,h*.105,l*.17);deck.position.set(0,h*.365,l*.31);deck.castShadow=true;g.add(deck);
+ const cabin=new THREE.Mesh(new THREE.SphereGeometry(1,28,18),body);
+ cabin.scale.set(w*.355,h*.29,l*.265);cabin.position.set(0,h*.59,l*.035);cabin.castShadow=true;g.add(cabin);
+ const glazing=new THREE.Mesh(new THREE.SphereGeometry(1,28,18),glass);
+ glazing.scale.set(w*.327,h*.245,l*.238);glazing.position.set(0,h*.605,l*.035);g.add(glazing);
+ for(const side of [-1,1]){
+  const sideGlass=new THREE.Mesh(new THREE.SphereGeometry(1,20,12),glass);
+  sideGlass.scale.set(w*.025,h*.155,l*.19);sideGlass.position.set(side*w*.332,h*.61,l*.035);g.add(sideGlass);
+  const mirror=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),body);
+  mirror.scale.set(w*.055,h*.035,l*.045);mirror.position.set(side*w*.46,h*.48,-l*.19);g.add(mirror);
  }
- for(const x of [-w*.34,w*.34]){cube(placeholder,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(placeholder,w*.15,.09,.035,rear,x,h*.42,l*.472)}
- modelRoot.add(placeholder);
- if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xe8f2ff,65,105,Math.PI/6,.62,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-38);g.add(spot,spot.target)}}
- // Stable fallback vehicle is the rendered car. The imported pack stays disabled until its internal layout is verified.
- // This avoids replacing a visible vehicle with a wrongly assembled GLB scene.
-
+ for(const z of [-l*.32,l*.32])for(const x of [-w*.49,w*.49]){
+  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh*.88,wh*.88,.16,24),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);tire.castShadow=true;g.add(tire);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.52,wh*.52,.172,20),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);g.add(hub);
+  const center=new THREE.Mesh(new THREE.CylinderGeometry(wh*.16,wh*.16,.18,16),trim);center.rotation.z=Math.PI/2;center.position.copy(tire.position);g.add(center);
+ }
+ for(const x of [-w*.32,w*.32]){
+  const head=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),front);head.scale.set(w*.095,h*.035,.045);head.position.set(x,h*.34,-l*.465);g.add(head);
+  const tail=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),rear);tail.scale.set(w*.08,h*.045,.04);tail.position.set(x,h*.34,l*.465);g.add(tail);
+ }
+ cube(g,w*.72,h*.045,.075,trim,0,h*.20,-l*.455);
+ cube(g,w*.72,h*.045,.075,trim,0,h*.20,l*.455);
+ if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xe8f2ff,65,105,Math.PI/6,.62,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-38);g.add(spot,spot.target);}}
  return g;
 }
 function init(){
