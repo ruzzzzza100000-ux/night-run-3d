@@ -28,18 +28,17 @@ button.primary{cursor:pointer;border:0;border-radius:11px;background:var(--lime)
 <script type="module">
 import * as THREE from 'three';
 const $=id=>document.getElementById(id);
-const PACK_URL='./generic_passenger_car_pack.glb';
 const cars=[
-{name:'Compact',year:'CITY CLASS',type:'Compact',color:'#397db2',w:1.75,l:3.8,h:1.45,modelIndex:0,modelUrl:PACK_URL},
-{name:'Coupe',year:'CITY CLASS',type:'Coupe',color:'#7c8fa7',w:1.85,l:4.25,h:1.35,modelIndex:1,modelUrl:PACK_URL},
-{name:'Hatchback',year:'CITY CLASS',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.05,h:1.5,modelIndex:2,modelUrl:PACK_URL},
-{name:'Minivan',year:'CITY CLASS',type:'Minivan',color:'#b8b8b8',w:1.9,l:4.6,h:1.9,modelIndex:3,modelUrl:PACK_URL},
-{name:'Offroad',year:'CITY CLASS',type:'Offroad',color:'#7f898b',w:2,l:4.5,h:1.9,modelIndex:4,modelUrl:PACK_URL},
-{name:'Pickup',year:'CITY CLASS',type:'Pickup',color:'#a7a69d',w:2,l:5,h:1.9,modelIndex:5,modelUrl:PACK_URL},
-{name:'Sedan',year:'CITY CLASS',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,modelIndex:6,modelUrl:PACK_URL},
-{name:'Sport',year:'CITY CLASS',type:'Sport',color:'#d74b42',w:1.9,l:4.3,h:1.3,modelIndex:7,modelUrl:PACK_URL},
-{name:'SUV',year:'CITY CLASS',type:'SUV',color:'#9b9f9d',w:1.95,l:4.5,h:1.8,modelIndex:8,modelUrl:PACK_URL},
-{name:'Wagon',year:'CITY CLASS',type:'Wagon',color:'#839b79',w:1.85,l:4.7,h:1.55,modelIndex:9,modelUrl:PACK_URL}
+{name:'Compact',year:'CITY CLASS',type:'Compact',color:'#397db2',w:1.75,l:3.8,h:1.45},
+{name:'Coupe',year:'CITY CLASS',type:'Coupe',color:'#7c8fa7',w:1.85,l:4.25,h:1.35},
+{name:'Hatchback',year:'CITY CLASS',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.05,h:1.5},
+{name:'Minivan',year:'CITY CLASS',type:'Minivan',color:'#b8b8b8',w:1.9,l:4.6,h:1.9},
+{name:'Offroad',year:'CITY CLASS',type:'Offroad',color:'#7f898b',w:2,l:4.5,h:1.9},
+{name:'Pickup',year:'CITY CLASS',type:'Pickup',color:'#a7a69d',w:2,l:5,h:1.9},
+{name:'Sedan',year:'CITY CLASS',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47},
+{name:'Sport',year:'CITY CLASS',type:'Sport',color:'#d74b42',w:1.9,l:4.3,h:1.3},
+{name:'SUV',year:'CITY CLASS',type:'SUV',color:'#9b9f9d',w:1.95,l:4.5,h:1.8},
+{name:'Wagon',year:'CITY CLASS',type:'Wagon',color:'#839b79',w:1.85,l:4.7,h:1.55}
 ];
 let selected=0,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
 const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
