@@ -86,7 +86,7 @@ function buildCar(spec,headlights=false){
   const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);modelRoot.add(hub);
  }
  for(const x of [-w*.34,w*.34]){cube(modelRoot,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(modelRoot,w*.15,.09,.035,rear,x,h*.42,l*.472)}
- if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xddeaff,22,78,Math.PI/8,.5,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-25);g.add(spot,spot.target)}}
+ if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xe8f2ff,65,105,Math.PI/6,.62,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-38);g.add(spot,spot.target)}}
  loadVehicleModel(spec).then(source=>{
   const model=source.clone(true);model.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -100,13 +100,13 @@ function buildCar(spec,headlights=false){
  return g;
 }
 function init(){
- scene=new THREE.Scene();scene.background=new THREE.Color('#070d18');scene.fog=new THREE.FogExp2('#070d18',.009);
+ scene=new THREE.Scene();scene.background=new THREE.Color('#101b2c');scene.fog=new THREE.FogExp2('#101b2c',.0045);
  camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,230);camera.position.set(0,4,10);
- renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;$('scene').appendChild(renderer.domElement);
- scene.add(new THREE.HemisphereLight(0x9bb9e8,0x13171d,1.1));const moon=new THREE.DirectionalLight(0x9ab9ff,1.25);moon.position.set(-15,24,-10);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);scene.add(moon);
- const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,360),material('#080e12',1));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.13,-110);scene.add(ground);
- const road=new THREE.Mesh(new THREE.PlaneGeometry(roadWidth,320),material('#252a31',.95));road.rotation.x=-Math.PI/2;road.position.set(0,-.05,-110);scene.add(road);
- for(const x of [-roadWidth/2+.16,roadWidth/2-.16]){const edge=cube(scene,.09,.015,320,material('#aab4b7'),x,-.02,-110)}
+ renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.45;$('scene').appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xc6dcff,0x303744,2.0));const fill=new THREE.DirectionalLight(0xb8d0ff,1.6);fill.position.set(8,12,6);scene.add(fill);const moon=new THREE.DirectionalLight(0x9ab9ff,1.8);moon.position.set(-15,24,-10);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);scene.add(moon);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,360),material('#182332',1));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.13,-110);scene.add(ground);
+ const road=new THREE.Mesh(new THREE.PlaneGeometry(roadWidth,320),material('#343b47',.95));road.rotation.x=-Math.PI/2;road.position.set(0,-.05,-110);scene.add(road);
+ for(const x of [-roadWidth/2+.16,roadWidth/2-.16]){const edge=cube(scene,.09,.015,320,material('#d4e2f2'),x,-.02,-110)}
  for(let i=0;i<32;i++){const z=12-i*10;for(const x of [-laneW/2,laneW/2]){const d=new THREE.Mesh(new THREE.PlaneGeometry(.10,4.6),material('#d1d2cb'));d.rotation.x=-Math.PI/2;d.position.set(x,-.018,z);scene.add(d);stripes.push(d)}
  if(i%2===0){for(const x of [-roadWidth/2-1.5,roadWidth/2+1.5]){const p=new THREE.Group();p.position.set(x,0,z);cube(p,.07,4.5,.07,material('#39414b'),0,2.25,0);cube(p,.38,.11,.55,material('#fff0c6',.2,.1,0xffd790),x<0?.45:-.45,4.25,-.18);scene.add(p);lamps.push(p)}}
  if(i%3===0)for(const x of [-1,1]){const t=new THREE.Group();t.position.set(x*rand(12,22),0,z-rand(0,6));cube(t,.16,2,.16,material('#302b29'),0,1,0);for(let j=0;j<3;j++){const c=new THREE.Mesh(new THREE.ConeGeometry(rand(1,1.6),rand(2,3),7),material('#101e20'));c.position.y=2+j*.8;t.add(c)}scene.add(t);trees.push(t)}
