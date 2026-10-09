@@ -24,44 +24,74 @@ button.primary{cursor:pointer;border:0;border-radius:11px;background:var(--lime)
 <div id="mobile"><div class="cluster"><button class="ctl" data-key="left">‹</button><button class="ctl" data-key="right">›</button></div><div class="cluster"><button class="ctl brake" data-key="brake">BRAKE</button><button class="ctl gas" data-key="gas">GAS</button></div></div>
 <div id="garage"><div class="panel"><div class="eyebrow">3D DRIVING PROTOTYPE / 01</div><h1>Night Run<span style="color:var(--lime)">.</span></h1><div class="desc">Ночная скоростная трасса, трафик и обгоны. Выбери машину, выезжай на шоссе и постарайся не разбить её.</div><div id="cars"></div><div class="actions"><button class="primary" id="start">START ENGINE ↗</button><button class="secondary" id="random">СЛУЧАЙНЫЙ ЦВЕТ</button><span class="note">Управление: клавиатура или сенсорные кнопки. Нужен интернет для загрузки 3D-движка.</span></div></div></div>
 <div id="pause"><div class="pausebox"><div class="eyebrow">NIGHT RUN</div><h2 id="ptitle">Пауза</h2><p id="ptext">Заезд приостановлен.</p><button class="primary" id="resume">ПРОДОЛЖИТЬ</button> <button class="secondary" id="garageBtn">ГАРАЖ</button></div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id);
 const cars=[
-{name:'Nissan Note',year:'2007',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.08,h:1.55,shape:'hatch'},
-{name:'VW Tiguan Allspace',year:'2020',type:'SUV',color:'#b9bec0',w:1.84,l:4.70,h:1.72,shape:'suv'},
-{name:'VW Passat B6',year:'2010',type:'Sedan',color:'#7893b5',w:1.82,l:4.77,h:1.47,shape:'sedan'},
-{name:'VW Tiguan',year:'2013',type:'SUV',color:'#9b9f9d',w:1.81,l:4.43,h:1.70,shape:'suv'},
-{name:'Volvo S40',year:'2008',type:'Sedan',color:'#9daab7',w:1.77,l:4.47,h:1.45,shape:'sedan'},
-{name:'Honda Pilot',year:'2012',type:'SUV',color:'#a7a69d',w:1.99,l:4.85,h:1.82,shape:'suv'},
-{name:'Lada Granta',year:'',type:'Sedan',color:'#d1d3d1',w:1.70,l:4.26,h:1.50,shape:'sedan'},
-{name:'Mitsubishi Colt',year:'2007',type:'Hatchback',color:'#9c88b5',w:1.69,l:3.87,h:1.55,shape:'hatch'}
+{name:'Hatchback Sport',year:'KENNEY CC0',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.08,h:1.55,model:'hatchback-sports'},
+{name:'Sedan',year:'KENNEY CC0',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,model:'sedan'},
+{name:'Sedan Sport',year:'KENNEY CC0',type:'Sedan',color:'#b7b8bd',w:1.85,l:4.45,h:1.42,model:'sedan-sports'},
+{name:'SUV',year:'KENNEY CC0',type:'SUV',color:'#9b9f9d',w:1.9,l:4.35,h:1.75,model:'suv'},
+{name:'SUV Luxury',year:'KENNEY CC0',type:'SUV',color:'#a7a69d',w:2.0,l:4.7,h:1.9,model:'suv-luxury'},
+{name:'Race',year:'KENNEY CC0',type:'Sports',color:'#d74b42',w:1.9,l:4.2,h:1.3,model:'race'},
+{name:'Race Future',year:'KENNEY CC0',type:'Sports',color:'#7f91a6',w:2.0,l:4.6,h:1.35,model:'race-future'},
+{name:'Taxi',year:'KENNEY CC0',type:'Sedan',color:'#d9bd4b',w:1.8,l:4.35,h:1.5,model:'taxi'},
+{name:'Police',year:'KENNEY CC0',type:'Service',color:'#4c76a8',w:1.8,l:4.35,h:1.55,model:'police'},
+{name:'Ambulance',year:'KENNEY CC0',type:'Emergency',color:'#e4e5e7',w:1.9,l:4.55,h:2.0,model:'ambulance'},
+{name:'Delivery',year:'KENNEY CC0',type:'Van',color:'#d7d7d2',w:1.9,l:4.45,h:2.1,model:'delivery'},
+{name:'Delivery Flat',year:'KENNEY CC0',type:'Van',color:'#b5b9bc',w:1.9,l:4.35,h:2.0,model:'delivery-flat'},
+{name:'Van',year:'KENNEY CC0',type:'Van',color:'#8d9da8',w:1.9,l:4.8,h:2.2,model:'van'},
+{name:'Firetruck',year:'KENNEY CC0',type:'Emergency',color:'#d34438',w:2.3,l:6.4,h:2.8,model:'firetruck'},
+{name:'Garbage Truck',year:'KENNEY CC0',type:'Truck',color:'#839b79',w:2.2,l:6.0,h:2.8,model:'garbage-truck'},
+{name:'Truck',year:'KENNEY CC0',type:'Truck',color:'#687e91',w:2.3,l:6.0,h:2.8,model:'truck'},
+{name:'Truck Flat',year:'KENNEY CC0',type:'Truck',color:'#a5a9ad',w:2.3,l:6.2,h:2.6,model:'truck-flat'},
+{name:'Tractor',year:'KENNEY CC0',type:'Utility',color:'#779454',w:1.9,l:3.7,h:2.0,model:'tractor'},
+{name:'Tractor Police',year:'KENNEY CC0',type:'Utility',color:'#6682a0',w:1.9,l:3.8,h:2.0,model:'tractor-police'},
+{name:'Tractor Shovel',year:'KENNEY CC0',type:'Utility',color:'#d3a447',w:2.2,l:4.4,h:2.2,model:'tractor-shovel'},
+{name:'Kart Oobi',year:'KENNEY CC0',type:'Kart',color:'#d34c3f',w:1.1,l:2.2,h:1.0,model:'kart-oobi'},
+{name:'Kart Oodi',year:'KENNEY CC0',type:'Kart',color:'#4b8eaf',w:1.1,l:2.2,h:1.0,model:'kart-oodi'},
+{name:'Kart Ooli',year:'KENNEY CC0',type:'Kart',color:'#d5bd4a',w:1.1,l:2.2,h:1.0,model:'kart-ooli'},
+{name:'Kart Oopi',year:'KENNEY CC0',type:'Kart',color:'#7caa6c',w:1.1,l:2.2,h:1.0,model:'kart-oopi'},
+{name:'Kart Oozi',year:'KENNEY CC0',type:'Kart',color:'#aa7ab2',w:1.1,l:2.2,h:1.0,model:'kart-oozi'}
 ];
 let selected=2,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
 const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
 const rand=(a,b)=>a+Math.random()*(b-a);
 function material(color,roughness=.5,metalness=.15,emissive=0){return new THREE.MeshStandardMaterial({color,roughness,metalness,emissive,emissiveIntensity:emissive?.3:0})}
 function cube(p,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+const MODEL_BASE='https://raw.githubusercontent.com/Hidencod/tge-assets/main/packs/car-kit/';
+const gltfLoader=new GLTFLoader();
+const modelCache=new Map();
+function loadVehicleModel(key){
+ if(!modelCache.has(key))modelCache.set(key,new Promise((resolve,reject)=>gltfLoader.load(MODEL_BASE+key+'.glb',g=>resolve(g.scene),undefined,reject)));
+ return modelCache.get(key);
+}
 function buildCar(spec,headlights=false){
- const g=new THREE.Group();const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),black=material('#181d23',.4),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
- const w=spec.w,l=spec.l,h=spec.h,suv=spec.shape==='suv',hatch=spec.shape==='hatch',wh=h*(suv?.135:.125),wy=wh*1.05;
- // Lower shell and tapered front/rear
- cube(g,w*.90,h*.26,l*.89,body,0,h*.30,0);cube(g,w*.84,h*.13,l*.11,body,0,h*.27,-l*.45);cube(g,w*.84,h*.12,l*.10,body,0,h*.27,l*.45);
- const cabL=l*(suv?.49:hatch?.49:.42),cabZ=hatch?l*.015:l*.015,cabY=h*(suv?.70:.68),cabW=w*.73;
- const cabin=cube(g,cabW,h*(suv?.39:.34),cabL,body,0,cabY,cabZ);cabin.rotation.x=0;
- cube(g,cabW*.90,h*.23,cabL*.84,glass,0,cabY+h*.015,cabZ);
- cube(g,cabW*.99,h*.065,cabL*.96,body,0,cabY+h*.18,cabZ);
- // Windshield / back glass
- const wind=cube(g,cabW*.88,h*.19,.035,glass,0,cabY-.005,cabZ-cabL*.48);wind.rotation.x=-.35;
- const back=cube(g,cabW*.84,h*.18,.035,glass,0,cabY,cabZ+cabL*.48);back.rotation.x=.30;
+ const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
+ const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
+ const w=spec.w,l=spec.l,h=spec.h,wh=h*.125,wy=wh*1.05;
+ // Placeholder is replaced by the real CC0 GLB when it finishes loading.
+ cube(modelRoot,w*.90,h*.26,l*.89,body,0,h*.30,0);
+ cube(modelRoot,w*.73,h*.34,l*.42,body,0,h*.68,l*.015);
+ cube(modelRoot,w*.66,h*.23,l*.35,glass,0,h*.69,l*.015);
  for(const z of [-l*.32,l*.32])for(const x of [-w*.49,w*.49]){
-  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);tire.castShadow=true;g.add(tire);
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);g.add(hub);
+  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);modelRoot.add(tire);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);modelRoot.add(hub);
  }
- for(const x of [-w*.34,w*.34]){cube(g,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(g,w*.15,.09,.035,rear,x,h*.42,l*.472)}
- cube(g,w*.29,h*.11,.04,black,0,h*.39,-l*.48);for(let i=0;i<3;i++)cube(g,w*.24,.012,.045,metal,0,h*(.36+i*.025),-l*.49);
- for(const x of [-w*.51,w*.51])cube(g,.13,.08,.16,body,x,h*.58,-l*.14);
+ for(const x of [-w*.34,w*.34]){cube(modelRoot,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(modelRoot,w*.15,.09,.035,rear,x,h*.42,l*.472)}
  if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xddeaff,22,78,Math.PI/8,.5,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-25);g.add(spot,spot.target)}}
+ loadVehicleModel(spec.model).then(source=>{
+  const model=source.clone(true);model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  if(!size.x||!size.y||!size.z)return;
+  model.scale.set(spec.w/size.x,spec.h/size.y,spec.l/size.z);
+  model.rotation.y=Math.PI;
+  model.position.set(-center.x*model.scale.x,-box.min.y*model.scale.y,-center.z*model.scale.z);
+  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material=o.material.clone();o.material.side=THREE.DoubleSide;}}});
+  modelRoot.clear();modelRoot.add(model);
+ }).catch(err=>console.warn('Could not load CC0 vehicle model:',spec.model,err));
  return g;
 }
 function init(){
