@@ -110,7 +110,8 @@ function buildCar(spec,headlights=false){
   model.position.y-=box.min.y;
   model.position.z-=center.z;
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=mats.map(m=>{const clone=m.clone();clone.side=THREE.DoubleSide;return clone;});if(!Array.isArray(o.material))o.material=o.material[0];}}});
-  modelRoot.clear();modelRoot.add(model);
+  // Keep the visible placeholder until model orientation and bounds are verified.
+  modelRoot.add(model);
  }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
 }
