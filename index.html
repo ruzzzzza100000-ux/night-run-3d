@@ -55,26 +55,28 @@ function loadVehicleModel(spec){
  if(!modelCache.has(url))modelCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,g=>{
   const root=g.scene;root.updateMatrixWorld(true);
   const meshes=[];root.traverse(n=>{if(n.isMesh&&n.geometry)meshes.push(n);});
-  if(!meshes.length){reject(new Error('GLB не содержит мешей'));return;}
-  const boxOf=n=>new THREE.Box3().setFromObject(n);
-  const sizeOf=n=>boxOf(n).getSize(new THREE.Vector3());
-  const nameKeys={0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad','off road'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']}[spec.modelIndex]||[];
-  const candidates=[];
-  root.traverse(n=>{
-   if(n===root||!n.children.length)return;
-   let count=0;n.traverse(x=>{if(x.isMesh)count++;});
-   if(count<3)return;
-   const z=sizeOf(n),horizontal=Math.max(z.x,z.z),vertical=z.y;
-   if(horizontal<.4||vertical<.25||horizontal/vertical<1.05||horizontal/vertical>8)return;
-   const name=(n.name||'').toLowerCase().replace(/[_-]+/g,' ');
-   const named=nameKeys.some(k=>name.includes(k));
-   // Candidate should be a vehicle-sized group, not a wheel, floor or the entire display.
-   const volume=z.x*z.y*z.z;
-   candidates.push({node:n,count,z,volume,named,depth:(n.parent?1:0)});
-  });
-  candidates.sort((a,b)=>(Number(b.named)-Number(a.named))||(a.volume-b.volume));
-  const chosen=candidates[0]?.node||root;
-  console.info('[car pack diagnostic]',{meshCount:meshes.length,topLevel:root.children.map(n=>n.name),candidateCount:candidates.length,chosen:chosen.name,bounds:sizeOf(chosen).toArray()});
+  if(!meshes.length){reject(new Error('GLB загружен, но не содержит мешей'));return;}
+  const keys={0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']}[spec.modelIndex]||[];
+  const norm=n=>(n||'').toLowerCase().replace(/[_-]+/g,' ').trim();
+  const nodes=[];root.traverse(n=>{if(n!==root&&n.children.length)nodes.push(n);});
+  // Find the named vehicle group, not its individual Body mesh.
+  let chosen=nodes.find(n=>{const name=norm(n.name);return keys.some(k=>name===k||name===k+' car'||name===k+' vehicle');});
+  if(!chosen){
+   const body=nodes.find(n=>{const name=norm(n.name);return keys.some(k=>name===k+' body'||name.startsWith(k+' body '));});
+   if(body&&body.parent&&body.parent!==root)chosen=body.parent;
+  }
+  if(!chosen){
+   const ranked=nodes.map(n=>{
+    const b=new THREE.Box3().setFromObject(n),z=b.getSize(new THREE.Vector3());
+    let count=0;n.traverse(x=>{if(x.isMesh)count++;});
+    const name=norm(n.name),bad=/wheel|tire|tyre|glass|window|body|light|interior|mirror|trim/.test(name);
+    const ratio=Math.max(z.x,z.z)/Math.max(z.y,.001);
+    return {n,z,count,score:(count>=8?100:0)+(ratio>1.2&&ratio<7?20:0)+(bad?-100:0)+Math.min(z.x*z.y*z.z,100)};
+   }).filter(x=>x.count>=4&&x.z.x>.4&&x.z.y>.25&&x.z.z>.4).sort((a,b)=>b.score-a.score);
+   chosen=ranked[0]?.n||root;
+  }
+  const b=new THREE.Box3().setFromObject(chosen),z=b.getSize(new THREE.Vector3());
+  console.info('[car pack diagnostic]',{meshes:meshes.length,requested:keys[0],selected:chosen.name,bounds:z.toArray()});
   resolve(chosen);
  },undefined,reject)));
  return modelCache.get(url);
