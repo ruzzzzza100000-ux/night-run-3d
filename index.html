@@ -58,39 +58,35 @@ function loadVehicleModel(spec){
   if(!meshes.length){reject(new Error('GLB загружен, но не содержит мешей'));return;}
   const names=['compact','coupe','hatchback','minivan','offroad','pickup','sedan','sport','suv','wagon'];
   const wanted=names[spec.modelIndex]||'compact';
-  const norm=n=>(n||'').toLowerCase().replace(/[_-]+/g,' ').trim();
-  const nodes=[];root.traverse(n=>{if(n!==root&&n.children.length)nodes.push(n);});
-  // Asset uses named parts such as Compact_Body. Find a parent that includes the
-  // complete vehicle, not the body mesh itself.
-  const body=nodes.find(n=>norm(n.name)===wanted+' body');
-  let chosen=null;
-  if(body){
-   let p=body;
-   while(p.parent&&p.parent!==root){
-    let count=0;p.traverse(x=>{if(x.isMesh)count++;});
-    if(count>=5){chosen=p;break;}
-    p=p.parent;
-   }
+  const norm=n=>(n||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  // This GLB stores cars as separately named meshes under one RootNode, not as
+  // ten child groups. Assemble the selected vehicle from all matching mesh names.
+  const matching=meshes.filter(m=>{
+   const n=norm(m.name);
+   return n===wanted||n.startsWith(wanted+' ')||n.startsWith(wanted+'_')||n.startsWith(wanted+'-');
+  });
+  const vehicle=new THREE.Group();vehicle.name=wanted+' vehicle';
+  const invRoot=new THREE.Matrix4().copy(root.matrixWorld).invert();
+  for(const source of matching){
+   source.updateWorldMatrix(true,false);
+   const relative=new THREE.Matrix4().copy(invRoot).multiply(source.matrixWorld);
+   const part=source.clone(false);
+   part.matrixAutoUpdate=false;
+   part.matrix.copy(relative);
+   part.matrix.decompose(part.position,part.quaternion,part.scale);
+   part.matrixAutoUpdate=true;
+   part.geometry=source.geometry;
+   part.material=source.material;
+   vehicle.add(part);
   }
-  if(!chosen)chosen=nodes.find(n=>norm(n.name)===wanted||norm(n.name)===wanted+' car'||norm(n.name)===wanted+' vehicle');
-  if(!chosen){
-   const scored=nodes.map(n=>{
-    const b=new THREE.Box3().setFromObject(n),z=b.getSize(new THREE.Vector3());let count=0;
-    n.traverse(x=>{if(x.isMesh)count++;});
-    const name=norm(n.name);
-    return {n,z,count,score:(name.includes(wanted)?1000:0)+(count>=5?100:0)+Math.min(z.x*z.y*z.z,50)};
-   }).filter(x=>x.count>=5&&x.z.x>.4&&x.z.y>.2&&x.z.z>.4).sort((a,b)=>b.score-a.score);
-   chosen=scored[0]?.n||root;
-  }
-  // Convert the chosen nested group's transform to root-local space before detaching it.
-  root.updateWorldMatrix(true,true);chosen.updateWorldMatrix(true,true);
-  const relative=new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(chosen.matrixWorld);
-  const vehicle=chosen.clone(true);
-  vehicle.matrixAutoUpdate=true;
-  vehicle.applyMatrix4(relative);
   vehicle.updateMatrixWorld(true);
-  const b=new THREE.Box3().setFromObject(vehicle),z=b.getSize(new THREE.Vector3());
-  console.info('[car pack diagnostic]',{meshCount:meshes.length,requested:wanted,selected:chosen.name,bounds:z.toArray(),parts:(()=>{let n=0;vehicle.traverse(x=>{if(x.isMesh)n++;});return n;})()});
+  const box=new THREE.Box3().setFromObject(vehicle),size=box.getSize(new THREE.Vector3());
+  let count=0;vehicle.traverse(n=>{if(n.isMesh)count++;});
+  console.info('[car pack diagnostic]',{meshCount:meshes.length,requested:wanted,matching:matching.length,selected:vehicle.name,parts:count,bounds:size.toArray(),sampleNames:meshes.slice(0,20).map(m=>m.name)});
+  if(matching.length<2||size.x<.25||size.y<.15||size.z<.25){
+   reject(new Error('Не удалось собрать автомобиль '+wanted+' из GLB; совпадений: '+matching.length));
+   return;
+  }
   resolve(vehicle);
  },undefined,reject)));
  return modelCache.get(url);
