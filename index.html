@@ -53,28 +53,32 @@ const modelCache=new Map();
 function loadVehicleModel(spec){
  const url=spec.modelUrl||MODEL_BASE+spec.model+'.glb';
  if(!modelCache.has(url))modelCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,g=>{
-  const root=g.scene;
-  root.updateMatrixWorld(true);
-  const all=[];
-  root.traverse(n=>{if(n.isMesh)all.push(n);});
-  if(!all.length){reject(new Error('GLB загружен, но в сцене нет mesh'));return;}
-  // Prefer a named vehicle group if the pack exposes vehicle names. Otherwise use the
-  // complete scene instead of mistakenly selecting one arbitrary wheel/body part.
-  const keys={
-   0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad','off-road'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']
-  }[spec.modelIndex]||[];
-  let match=null;
+  const root=g.scene;root.updateMatrixWorld(true);
+  const meshes=[];root.traverse(n=>{if(n.isMesh&&n.geometry)meshes.push(n);});
+  if(!meshes.length){reject(new Error('GLB не содержит мешей'));return;}
+  const boxOf=n=>new THREE.Box3().setFromObject(n);
+  const sizeOf=n=>boxOf(n).getSize(new THREE.Vector3());
+  const nameKeys={0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad','off road'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']}[spec.modelIndex]||[];
+  const candidates=[];
   root.traverse(n=>{
-   if(match||!n.name)return;
-   const name=n.name.toLowerCase().replace(/[_-]+/g,' ');
-   if(keys.some(k=>name.includes(k))){const b=new THREE.Box3().setFromObject(n);const z=b.getSize(new THREE.Vector3());if(z.x>.3&&z.y>.2&&z.z>.3)match=n;}
+   if(n===root||!n.children.length)return;
+   let count=0;n.traverse(x=>{if(x.isMesh)count++;});
+   if(count<3)return;
+   const z=sizeOf(n),horizontal=Math.max(z.x,z.z),vertical=z.y;
+   if(horizontal<.4||vertical<.25||horizontal/vertical<1.05||horizontal/vertical>8)return;
+   const name=(n.name||'').toLowerCase().replace(/[_-]+/g,' ');
+   const named=nameKeys.some(k=>name.includes(k));
+   // Candidate should be a vehicle-sized group, not a wheel, floor or the entire display.
+   const volume=z.x*z.y*z.z;
+   candidates.push({node:n,count,z,volume,named,depth:(n.parent?1:0)});
   });
-  console.info('[Passenger pack]',{meshes:all.length,topLevel:root.children.length,names:root.children.map(n=>n.name),selected:match?.name||'full scene'});
-  resolve({root,match});
+  candidates.sort((a,b)=>(Number(b.named)-Number(a.named))||(a.volume-b.volume));
+  const chosen=candidates[0]?.node||root;
+  console.info('[car pack diagnostic]',{meshCount:meshes.length,topLevel:root.children.map(n=>n.name),candidateCount:candidates.length,chosen:chosen.name,bounds:sizeOf(chosen).toArray()});
+  resolve(chosen);
  },undefined,reject)));
- return modelCache.get(url).then(pack=>pack.match||pack.root);
+ return modelCache.get(url);
 }
-
 function buildCar(spec,headlights=false){
  const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
  const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
