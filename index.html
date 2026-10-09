@@ -29,36 +29,18 @@ button.primary{cursor:pointer;border:0;border-radius:11px;background:var(--lime)
 import * as THREE from 'three';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id);
+const PACK_URL='./generic_passenger_car_pack.glb';
 const cars=[
-{name:'Sedan Sport',year:'KENNEY CC0',type:'Sedan',color:'#397db2',w:1.85,l:4.45,h:1.42,model:'sedan-sports'},
-{name:'Executive Sedan',year:'KENNEY CC0',type:'Sedan',color:'#7c8fa7',w:1.82,l:4.55,h:1.47,model:'sedan'},
-{name:'Touring SUV',year:'KENNEY CC0',type:'SUV',color:'#7f898b',w:1.9,l:4.35,h:1.75,model:'suv'},
-{name:'Panel Delivery Van',year:'KENNEY CC0',type:'Van',color:'#b8b8b8',w:1.9,l:4.45,h:2.1,model:'delivery'},
-{name:'Hatchback Sport',year:'KENNEY CC0',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.08,h:1.55,model:'hatchback-sports'},
-{name:'Sedan',year:'KENNEY CC0',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,model:'sedan'},
-{name:'Sedan Sport',year:'KENNEY CC0',type:'Sedan',color:'#b7b8bd',w:1.85,l:4.45,h:1.42,model:'sedan-sports'},
-{name:'SUV',year:'KENNEY CC0',type:'SUV',color:'#9b9f9d',w:1.9,l:4.35,h:1.75,model:'suv'},
-{name:'SUV Luxury',year:'KENNEY CC0',type:'SUV',color:'#a7a69d',w:2.0,l:4.7,h:1.9,model:'suv-luxury'},
-{name:'Race',year:'KENNEY CC0',type:'Sports',color:'#d74b42',w:1.9,l:4.2,h:1.3,model:'race'},
-{name:'Race Future',year:'KENNEY CC0',type:'Sports',color:'#7f91a6',w:2.0,l:4.6,h:1.35,model:'race-future'},
-{name:'Taxi',year:'KENNEY CC0',type:'Sedan',color:'#d9bd4b',w:1.8,l:4.35,h:1.5,model:'taxi'},
-{name:'Police',year:'KENNEY CC0',type:'Service',color:'#4c76a8',w:1.8,l:4.35,h:1.55,model:'police'},
-{name:'Ambulance',year:'KENNEY CC0',type:'Emergency',color:'#e4e5e7',w:1.9,l:4.55,h:2.0,model:'ambulance'},
-{name:'Delivery',year:'KENNEY CC0',type:'Van',color:'#d7d7d2',w:1.9,l:4.45,h:2.1,model:'delivery'},
-{name:'Delivery Flat',year:'KENNEY CC0',type:'Van',color:'#b5b9bc',w:1.9,l:4.35,h:2.0,model:'delivery-flat'},
-{name:'Van',year:'KENNEY CC0',type:'Van',color:'#8d9da8',w:1.9,l:4.8,h:2.2,model:'van'},
-{name:'Firetruck',year:'KENNEY CC0',type:'Emergency',color:'#d34438',w:2.3,l:6.4,h:2.8,model:'firetruck'},
-{name:'Garbage Truck',year:'KENNEY CC0',type:'Truck',color:'#839b79',w:2.2,l:6.0,h:2.8,model:'garbage-truck'},
-{name:'Truck',year:'KENNEY CC0',type:'Truck',color:'#687e91',w:2.3,l:6.0,h:2.8,model:'truck'},
-{name:'Truck Flat',year:'KENNEY CC0',type:'Truck',color:'#a5a9ad',w:2.3,l:6.2,h:2.6,model:'truck-flat'},
-{name:'Tractor',year:'KENNEY CC0',type:'Utility',color:'#779454',w:1.9,l:3.7,h:2.0,model:'tractor'},
-{name:'Tractor Police',year:'KENNEY CC0',type:'Utility',color:'#6682a0',w:1.9,l:3.8,h:2.0,model:'tractor-police'},
-{name:'Tractor Shovel',year:'KENNEY CC0',type:'Utility',color:'#d3a447',w:2.2,l:4.4,h:2.2,model:'tractor-shovel'},
-{name:'Kart Oobi',year:'KENNEY CC0',type:'Kart',color:'#d34c3f',w:1.1,l:2.2,h:1.0,model:'kart-oobi'},
-{name:'Kart Oodi',year:'KENNEY CC0',type:'Kart',color:'#4b8eaf',w:1.1,l:2.2,h:1.0,model:'kart-oodi'},
-{name:'Kart Ooli',year:'KENNEY CC0',type:'Kart',color:'#d5bd4a',w:1.1,l:2.2,h:1.0,model:'kart-ooli'},
-{name:'Kart Oopi',year:'KENNEY CC0',type:'Kart',color:'#7caa6c',w:1.1,l:2.2,h:1.0,model:'kart-oopi'},
-{name:'Kart Oozi',year:'KENNEY CC0',type:'Kart',color:'#aa7ab2',w:1.1,l:2.2,h:1.0,model:'kart-oozi'}
+{name:'Compact',year:'PASSENGER PACK',type:'Compact',color:'#397db2',w:1.75,l:3.8,h:1.45,modelIndex:0,modelUrl:PACK_URL},
+{name:'Coupe',year:'PASSENGER PACK',type:'Coupe',color:'#7c8fa7',w:1.85,l:4.25,h:1.35,modelIndex:1,modelUrl:PACK_URL},
+{name:'Hatchback',year:'PASSENGER PACK',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.05,h:1.5,modelIndex:2,modelUrl:PACK_URL},
+{name:'Minivan',year:'PASSENGER PACK',type:'Minivan',color:'#b8b8b8',w:1.9,l:4.6,h:1.9,modelIndex:3,modelUrl:PACK_URL},
+{name:'Offroad',year:'PASSENGER PACK',type:'Offroad',color:'#7f898b',w:2,l:4.5,h:1.9,modelIndex:4,modelUrl:PACK_URL},
+{name:'Pickup',year:'PASSENGER PACK',type:'Pickup',color:'#a7a69d',w:2,l:5,h:1.9,modelIndex:5,modelUrl:PACK_URL},
+{name:'Sedan',year:'PASSENGER PACK',type:'Sedan',color:'#7893b5',w:1.82,l:4.55,h:1.47,modelIndex:6,modelUrl:PACK_URL},
+{name:'Sport',year:'PASSENGER PACK',type:'Sport',color:'#d74b42',w:1.9,l:4.3,h:1.3,modelIndex:7,modelUrl:PACK_URL},
+{name:'SUV',year:'PASSENGER PACK',type:'SUV',color:'#9b9f9d',w:1.95,l:4.5,h:1.8,modelIndex:8,modelUrl:PACK_URL},
+{name:'Wagon',year:'PASSENGER PACK',type:'Wagon',color:'#839b79',w:1.85,l:4.7,h:1.55,modelIndex:9,modelUrl:PACK_URL}
 ];
 let selected=0,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
 const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
@@ -70,8 +52,16 @@ const gltfLoader=new GLTFLoader();
 const modelCache=new Map();
 function loadVehicleModel(spec){
  const url=spec.modelUrl||MODEL_BASE+spec.model+'.glb';
- if(!modelCache.has(url))modelCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,g=>resolve(g.scene),undefined,reject)));
- return modelCache.get(url);
+ if(!modelCache.has(url))modelCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,g=>{
+  const root=g.scene;
+  const candidates=root.children.filter(n=>{const b=new THREE.Box3().setFromObject(n);const z=b.getSize(new THREE.Vector3());return z.x>0.05&&z.y>0.05&&z.z>0.05;});
+  root.userData.vehicleCandidates=candidates.length?candidates:[root];
+  resolve(root);
+ },undefined,reject)));
+ return modelCache.get(url).then(root=>{
+  const candidates=root.userData.vehicleCandidates||[root];
+  return candidates[Math.min(spec.modelIndex||0,candidates.length-1)]||root;
+ });
 }
 function buildCar(spec,headlights=false){
  const g=new THREE.Group(),modelRoot=new THREE.Group();g.add(modelRoot);
@@ -110,7 +100,8 @@ function buildCar(spec,headlights=false){
   model.position.y-=box.min.y;
   model.position.z-=center.z;
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=mats.map(m=>{const clone=m.clone();clone.side=THREE.DoubleSide;return clone;});if(!Array.isArray(o.material))o.material=o.material[0];}}});
-  // Keep the visible placeholder until model orientation and bounds are verified.
+  // Remove placeholder only after the uploaded GLB variant loads successfully.
+  modelRoot.remove(placeholder);
   modelRoot.add(model);
  }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
