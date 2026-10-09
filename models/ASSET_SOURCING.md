@@ -25,6 +25,14 @@ Once licensed files are downloaded, convert/optimize them to self-contained GLB 
 - A royalty-free asset license does not automatically grant permission to use a vehicle manufacturer's trademarks or exact protected design in every commercial context. Confirm intended use before commercial release.
 - Once the files are available, connect each car's loader entry to the matching GLB, normalize scale/orientation/ground height, and reuse the same model pipeline for traffic.
 
-## Current state
+## Current implementation (2026-10-09)
 
-No purchased model binaries have been added yet. Marketplace pages are references only; this avoids copying paid assets or assets with editorial-only restrictions into the repository without a license. The existing game remains unchanged until suitable files are supplied and verified.
+The game now loads 25 real GLB vehicle assets from Kenney's Car Kit redistribution at `Hidencod/tge-assets`, under the pack's CC0 license:
+- 25 selectable vehicle types (cars, SUVs, vans, trucks, emergency vehicles, tractors and karts).
+- The loader fetches each GLB from `https://raw.githubusercontent.com/Hidencod/tge-assets/main/packs/car-kit/`.
+- Models are normalized to the game's dimensions and used for the player car and traffic. A simple placeholder is shown only while a model is loading or if the remote request fails.
+- The 50-item pack also includes wheels and debris props; these are not selectable vehicles and are not all used as traffic.
+
+This first integration references the publicly hosted files instead of duplicating the binaries into this game's repository. That keeps the repo small, but the remote asset repository must remain available for the models to load. The model source repo describes these as Kenney CC0 assets; see [Kenney's official Car Kit page](https://kenney.nl/assets/car-kit) and [the source catalog](https://github.com/Hidencod/tge-assets/blob/main/catalog.json).
+
+These are genuine low-poly 3D vehicle meshes, not exact real-world branded vehicle replicas. No paid or editorial-only models are included.
