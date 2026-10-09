@@ -129,10 +129,8 @@ function buildCar(spec,headlights=false){
   const modelSize=modelBounds.getSize(new THREE.Vector3());
   if(modelSize.x<.25||modelSize.y<.15||modelSize.z<.25)throw new Error('Vehicle model bounds are invalid: '+modelSize.toArray());
   modelRoot.add(model);
-  // Replace the placeholder only after the imported vehicle has valid geometry and bounds.
-  modelRoot.remove(placeholder);
-  placeholder.traverse(o=>{if(o.geometry)o.geometry.dispose();});
-  console.info('[vehicle loaded]',{name:spec.name,meshes:modelSize.toArray(),children:model.children.length});
+  // Keep the fallback car visible until the imported pack is verified in-browser.
+  console.info('[vehicle loaded; fallback retained]',{name:spec.name,meshes:modelSize.toArray(),children:model.children.length});
  }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
 }
