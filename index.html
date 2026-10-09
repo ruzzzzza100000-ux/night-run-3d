@@ -1,8 +1,116 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Night Run 3D</title>
-<style>html,body{margin:0;background:#070d18;color:#e8edf5;font-family:Arial,sans-serif}#status{position:fixed;z-index:5;top:10px;left:10px;color:#e8edf5;font-size:12px;pointer-events:none}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#070d18;color:#e8edf5;text-align:center;padding:24px;z-index:10}#loading.hide{display:none}</style></head>
-<body><div id="status">NIGHT RUN 3D</div><div id="loading">Загрузка игры…<br><small>Если экран не изменится, обнови страницу.</small></div>
-<script>const overlay=document.getElementById('loading');</script>
-<!-- Full game source is loaded from game.js. -->
-<script type="module" src="./game.js"></script>
-</body></html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Night Run 3D</title>
+<style>
+:root{color-scheme:dark;--lime:#c7ff5e;--panel:#0b121deF;--line:#34404c}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070d18;color:#f5f7fa;font-family:Inter,system-ui,Segoe UI,sans-serif}
+#scene{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+#garage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(110deg,#030811dd,#03081188);backdrop-filter:blur(5px);z-index:5}
+.panel{width:min(900px,100%);max-height:94vh;overflow:auto;background:#0b121ded;border:1px solid var(--line);border-radius:22px;padding:clamp(18px,3vw,30px);box-shadow:0 24px 90px #0009}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--lime)}h1{font-size:clamp(32px,5vw,52px);line-height:1;margin:12px 0;letter-spacing:-.05em}.desc{font-size:13px;line-height:1.6;color:#9ba8b6;max-width:620px}
+#cars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:22px 0}.car{cursor:pointer;text-align:left;background:#151d27;border:1px solid #2b3542;border-radius:13px;padding:11px;color:white}.car.sel{border-color:var(--lime);box-shadow:inset 0 0 0 1px var(--lime);background:#202a2d}.swatch{height:5px;width:34px;border-radius:8px;margin-bottom:10px}.car strong,.car small{display:block}.car strong{font-size:12px;line-height:1.35}.car small{color:#91a0b0;font-size:10px;margin-top:5px}
+button.primary{cursor:pointer;border:0;border-radius:11px;background:var(--lime);color:#10160a;font-weight:900;letter-spacing:.07em;padding:14px 22px;font-size:12px}button.secondary{cursor:pointer;background:transparent;border:1px solid #35414e;border-radius:11px;color:#d7e0e9;padding:13px 16px;font-size:12px}.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.note{font-size:10px;color:#778697;line-height:1.5}
+#hud{display:none;position:fixed;inset:0;z-index:2;pointer-events:none}.top{position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:8px}.brand{font-size:11px;letter-spacing:.15em;font-weight:900}.brand span{color:var(--lime)}.stats{display:flex;gap:7px}.stat{background:var(--panel);border:1px solid #ffffff20;border-radius:10px;padding:8px 11px;min-width:74px;backdrop-filter:blur(10px)}.stat small{display:block;color:#91a0b0;font-size:9px;letter-spacing:.1em}.stat strong{font-size:19px;line-height:1.5}.stat #speed{color:var(--lime);font-size:24px}.bottom{position:absolute;bottom:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;color:#b5c0cb;font-size:11px;text-shadow:0 1px 5px #000}.bottom strong{color:white}
+#pause{display:none;position:fixed;z-index:6;inset:0;align-items:center;justify-content:center;background:#050911b8;backdrop-filter:blur(5px)}.pausebox{width:min(340px,90vw);background:#0d141e;border:1px solid var(--line);border-radius:18px;padding:25px;text-align:center}.pausebox p{font-size:12px;color:#9ba8b6}
+#mobile{display:none;position:fixed;bottom:20px;left:0;right:0;z-index:3;justify-content:space-between;padding:0 16px;pointer-events:none}.cluster{display:flex;gap:9px}.ctl{pointer-events:auto;touch-action:none;width:60px;height:60px;border:1px solid #ffffff50;border-radius:50%;background:#101a26c9;color:white;font-size:23px}.ctl.gas{color:var(--lime);font-size:12px;font-weight:900}.ctl.brake{font-size:10px;font-weight:800}
+#error{display:none;position:fixed;z-index:9;inset:0;background:#070d18;color:#fff;padding:28px;font:14px/1.5 system-ui}
+@media(max-width:700px){#cars{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.top{top:10px;left:10px;right:10px}.stat{min-width:58px;padding:6px 8px}.stat strong{font-size:15px}.stat #speed{font-size:20px}.brand{font-size:9px}.bottom{left:10px;right:10px;bottom:8px;font-size:9px}#mobile{display:flex}.panel{border-radius:16px}.desc{font-size:12px}.note{max-width:100%}}
+</style></head>
+<body>
+<div id="scene"></div><div id="error"></div>
+<div id="hud"><div class="top"><div><div class="brand">NIGHT<span>RUN</span> / HIGHWAY</div><div id="carname" style="font-size:10px;color:#91a0b0;margin-top:5px">PASSAT B6 · 2010</div></div><div class="stats"><div class="stat"><small>SPEED</small><strong id="speed">000</strong></div><div class="stat"><small>DISTANCE</small><strong id="distance">0.00 km</strong></div><div class="stat"><small>OVERTAKES</small><strong id="overtakes">0</strong></div></div></div><div class="bottom"><div><strong>← → / A D</strong> steer · <strong>W / ↑</strong> gas · <strong>S / ↓</strong> brake · <strong>ESC</strong> pause</div><div id="status">NIGHT DRIVE</div></div></div>
+<div id="mobile"><div class="cluster"><button class="ctl" data-key="left">‹</button><button class="ctl" data-key="right">›</button></div><div class="cluster"><button class="ctl brake" data-key="brake">BRAKE</button><button class="ctl gas" data-key="gas">GAS</button></div></div>
+<div id="garage"><div class="panel"><div class="eyebrow">3D DRIVING PROTOTYPE / 01</div><h1>Night Run<span style="color:var(--lime)">.</span></h1><div class="desc">Ночная скоростная трасса, трафик и обгоны. Выбери машину, выезжай на шоссе и постарайся не разбить её.</div><div id="cars"></div><div class="actions"><button class="primary" id="start">START ENGINE ↗</button><button class="secondary" id="random">СЛУЧАЙНЫЙ ЦВЕТ</button><span class="note">Управление: клавиатура или сенсорные кнопки. Нужен интернет для загрузки 3D-движка.</span></div></div></div>
+<div id="pause"><div class="pausebox"><div class="eyebrow">NIGHT RUN</div><h2 id="ptitle">Пауза</h2><p id="ptext">Заезд приостановлен.</p><button class="primary" id="resume">ПРОДОЛЖИТЬ</button> <button class="secondary" id="garageBtn">ГАРАЖ</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const $=id=>document.getElementById(id);
+const cars=[
+{name:'Nissan Note',year:'2007',type:'Hatchback',color:'#9caeb7',w:1.78,l:4.08,h:1.55,shape:'hatch'},
+{name:'VW Tiguan Allspace',year:'2020',type:'SUV',color:'#b9bec0',w:1.84,l:4.70,h:1.72,shape:'suv'},
+{name:'VW Passat B6',year:'2010',type:'Sedan',color:'#7893b5',w:1.82,l:4.77,h:1.47,shape:'sedan'},
+{name:'VW Tiguan',year:'2013',type:'SUV',color:'#9b9f9d',w:1.81,l:4.43,h:1.70,shape:'suv'},
+{name:'Volvo S40',year:'2008',type:'Sedan',color:'#9daab7',w:1.77,l:4.47,h:1.45,shape:'sedan'},
+{name:'Honda Pilot',year:'2012',type:'SUV',color:'#a7a69d',w:1.99,l:4.85,h:1.82,shape:'suv'},
+{name:'Lada Granta',year:'',type:'Sedan',color:'#d1d3d1',w:1.70,l:4.26,h:1.50,shape:'sedan'},
+{name:'Mitsubishi Colt',year:'2007',type:'Hatchback',color:'#9c88b5',w:1.69,l:3.87,h:1.55,shape:'hatch'}
+];
+let selected=2,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
+const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
+const rand=(a,b)=>a+Math.random()*(b-a);
+function material(color,roughness=.5,metalness=.15,emissive=0){return new THREE.MeshStandardMaterial({color,roughness,metalness,emissive,emissiveIntensity:emissive?.3:0})}
+function cube(p,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
+function buildCar(spec,headlights=false){
+ const g=new THREE.Group();const body=material(spec.color,.26,.5),glass=material('#111e29',.16,.4),rubber=material('#111317',.85),metal=material('#b1bac2',.25,.85),black=material('#181d23',.4),front=material('#eaf0dc',.16,.1,0xd3e8b5),rear=material('#e92330',.2,.15,0xff101a);
+ const w=spec.w,l=spec.l,h=spec.h,suv=spec.shape==='suv',hatch=spec.shape==='hatch',wh=h*(suv?.135:.125),wy=wh*1.05;
+ // Lower shell and tapered front/rear
+ cube(g,w*.90,h*.26,l*.89,body,0,h*.30,0);cube(g,w*.84,h*.13,l*.11,body,0,h*.27,-l*.45);cube(g,w*.84,h*.12,l*.10,body,0,h*.27,l*.45);
+ const cabL=l*(suv?.49:hatch?.49:.42),cabZ=hatch?l*.015:l*.015,cabY=h*(suv?.70:.68),cabW=w*.73;
+ const cabin=cube(g,cabW,h*(suv?.39:.34),cabL,body,0,cabY,cabZ);cabin.rotation.x=0;
+ cube(g,cabW*.90,h*.23,cabL*.84,glass,0,cabY+h*.015,cabZ);
+ cube(g,cabW*.99,h*.065,cabL*.96,body,0,cabY+h*.18,cabZ);
+ // Windshield / back glass
+ const wind=cube(g,cabW*.88,h*.19,.035,glass,0,cabY-.005,cabZ-cabL*.48);wind.rotation.x=-.35;
+ const back=cube(g,cabW*.84,h*.18,.035,glass,0,cabY,cabZ+cabL*.48);back.rotation.x=.30;
+ for(const z of [-l*.32,l*.32])for(const x of [-w*.49,w*.49]){
+  const tire=new THREE.Mesh(new THREE.CylinderGeometry(wh,wh,.16,18),rubber);tire.rotation.z=Math.PI/2;tire.position.set(x,wy,z);tire.castShadow=true;g.add(tire);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(wh*.55,wh*.55,.17,12),metal);hub.rotation.z=Math.PI/2;hub.position.copy(tire.position);g.add(hub);
+ }
+ for(const x of [-w*.34,w*.34]){cube(g,w*.19,.07,.035,front,x,h*.43,-l*.473);cube(g,w*.15,.09,.035,rear,x,h*.42,l*.472)}
+ cube(g,w*.29,h*.11,.04,black,0,h*.39,-l*.48);for(let i=0;i<3;i++)cube(g,w*.24,.012,.045,metal,0,h*(.36+i*.025),-l*.49);
+ for(const x of [-w*.51,w*.51])cube(g,.13,.08,.16,body,x,h*.58,-l*.14);
+ if(headlights){for(const x of [-w*.32,w*.32]){const spot=new THREE.SpotLight(0xddeaff,22,78,Math.PI/8,.5,1);spot.position.set(x,.65,-l*.48);spot.target.position.set(x,-.2,-25);g.add(spot,spot.target)}}
+ return g;
+}
+function init(){
+ scene=new THREE.Scene();scene.background=new THREE.Color('#070d18');scene.fog=new THREE.FogExp2('#070d18',.009);
+ camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,230);camera.position.set(0,4,10);
+ renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;$('scene').appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0x9bb9e8,0x13171d,1.1));const moon=new THREE.DirectionalLight(0x9ab9ff,1.25);moon.position.set(-15,24,-10);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);scene.add(moon);
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,360),material('#080e12',1));ground.rotation.x=-Math.PI/2;ground.position.set(0,-.13,-110);scene.add(ground);
+ const road=new THREE.Mesh(new THREE.PlaneGeometry(roadWidth,320),material('#252a31',.95));road.rotation.x=-Math.PI/2;road.position.set(0,-.05,-110);scene.add(road);
+ for(const x of [-roadWidth/2+.16,roadWidth/2-.16]){const edge=cube(scene,.09,.015,320,material('#aab4b7'),x,-.02,-110)}
+ for(let i=0;i<32;i++){const z=12-i*10;for(const x of [-laneW/2,laneW/2]){const d=new THREE.Mesh(new THREE.PlaneGeometry(.10,4.6),material('#d1d2cb'));d.rotation.x=-Math.PI/2;d.position.set(x,-.018,z);scene.add(d);stripes.push(d)}
+ if(i%2===0){for(const x of [-roadWidth/2-1.5,roadWidth/2+1.5]){const p=new THREE.Group();p.position.set(x,0,z);cube(p,.07,4.5,.07,material('#39414b'),0,2.25,0);cube(p,.38,.11,.55,material('#fff0c6',.2,.1,0xffd790),x<0?.45:-.45,4.25,-.18);scene.add(p);lamps.push(p)}}
+ if(i%3===0)for(const x of [-1,1]){const t=new THREE.Group();t.position.set(x*rand(12,22),0,z-rand(0,6));cube(t,.16,2,.16,material('#302b29'),0,1,0);for(let j=0;j<3;j++){const c=new THREE.Mesh(new THREE.ConeGeometry(rand(1,1.6),rand(2,3),7),material('#101e20'));c.position.y=2+j*.8;t.add(c)}scene.add(t);trees.push(t)}
+ }
+ clock=new THREE.Clock();
+}
+function setCar(){if(player)scene.remove(player);player=buildCar(cars[selected],true);player.position.set(0,0,2);scene.add(player);$('carname').textContent=(cars[selected].name+' · '+(cars[selected].year||'LADA')).toUpperCase()}
+function garage(){const el=$('cars');el.innerHTML='';cars.forEach((c,i)=>{const b=document.createElement('button');b.className='car'+(i===selected?' sel':'');b.innerHTML='<div class="swatch" style="background:'+c.color+'"></div><strong>'+c.name+'</strong><small>'+(c.year||'LADA')+' · '+c.type+'</small>';b.onclick=()=>{selected=i;[...el.children].forEach((v,j)=>v.classList.toggle('sel',i===j))};el.appendChild(b)})}
+function spawnTraffic(){const lane=[-laneW,0,laneW].filter(x=>Math.abs(x-player.position.x)>2.3);const x=lane.length?lane[Math.floor(Math.random()*lane.length)]:laneW;const spec=cars[Math.floor(Math.random()*cars.length)];const c=buildCar({...spec,color:['#d0d4d7','#667888','#7d8585','#a69b83','#303a47'][Math.floor(Math.random()*5)]});c.scale.setScalar(rand(.88,1));c.position.set(x,0,-rand(55,105));c.userData={speed:rand(10,27),passed:false};scene.add(c);traffic.push(c)}
+function clearTraffic(){for(const c of traffic)scene.remove(c);traffic.length=0}
+function reset(){speed=0;distance=0;overtakes=0;spawn=.6;steer=0;crashed=false;clearTraffic();setCar();$('speed').textContent='000';$('distance').textContent='0.00 km';$('overtakes').textContent='0';$('status').textContent='NIGHT DRIVE'}
+function start(){reset();running=true;paused=false;$('garage').style.display='none';$('pause').style.display='none';$('hud').style.display='block';$('mobile').style.display=innerWidth<700?'flex':'none';clock.getDelta()}
+function stop(){running=false;paused=false;$('pause').style.display='none';$('hud').style.display='none';$('mobile').style.display='none';$('garage').style.display='flex'}
+function collision(){crashed=true;paused=true;$('ptitle').textContent='СТОЛКНОВЕНИЕ';$('ptext').textContent='Дистанция '+distance.toFixed(2)+' км · обгонов '+overtakes;$('resume').textContent='ЕЩЁ ЗАЕЗД';$('pause').style.display='flex'}
+function tick(){
+ requestAnimationFrame(tick);
+ if(!scene||!renderer)return;
+ const dt=Math.min(clock.getDelta(),.04);
+ if(running&&!paused){
+  const acc=keys.gas?31:0,br=keys.brake?56:0;speed=THREE.MathUtils.clamp(speed+(acc-br-(speed>0?5.2:0))*dt,0,66);
+  const turn=(keys.left?-1:0)+(keys.right?1:0);steer=THREE.MathUtils.damp(steer,turn,7,dt);player.position.x=THREE.MathUtils.clamp(player.position.x+steer*(.25+speed/65)*dt*6.3,-6.2,6.2);player.rotation.y=-steer*.1;
+  const dz=speed*dt;distance+=dz/1000;spawn-=dt;if(spawn<0){spawnTraffic();spawn=rand(.8,1.4)}
+  for(const d of stripes){d.position.z+=dz;if(d.position.z>14)d.position.z-=320}
+  for(const l of lamps){l.position.z+=dz;if(l.position.z>15)l.position.z-=320}
+  for(const t of trees){t.position.z+=dz;if(t.position.z>18)t.position.z-=320}
+  for(const c of [...traffic]){c.position.z+=(speed-c.userData.speed)*dt;if(!c.userData.passed&&c.position.z>6){c.userData.passed=true;if(Math.abs(c.position.x-player.position.x)<4)overtakes++}if(Math.abs(c.position.x-player.position.x)<1.8&&Math.abs(c.position.z-player.position.z)<3.6){collision();break}if(c.position.z>23){scene.remove(c);traffic.splice(traffic.indexOf(c),1)}}
+  $('speed').textContent=String(Math.round(speed*3.6)).padStart(3,'0');$('distance').textContent=distance.toFixed(2)+' km';$('overtakes').textContent=overtakes;
+  $('status').textContent=Math.abs(player.position.x)>5.4?'OFF ROAD':'NIGHT DRIVE';
+ }
+ if(!running){camera.position.set(0,3.3,9);camera.lookAt(0,.8,0);if(player)player.rotation.y=Math.sin(performance.now()*.0004)*.025}
+ else{camera.position.x=THREE.MathUtils.damp(camera.position.x,player.position.x*.62,3,dt);camera.position.y=THREE.MathUtils.damp(camera.position.y,4+speed*.008,2,dt);camera.position.z=THREE.MathUtils.damp(camera.position.z,player.position.z+9.5,3,dt);camera.lookAt(player.position.x*.55,.8,player.position.z-13-speed*.06);camera.fov=THREE.MathUtils.damp(camera.fov,65+speed*.12,2,dt);camera.updateProjectionMatrix()}
+ renderer.render(scene,camera);
+}
+$('start').addEventListener('click',start);$('random').addEventListener('click',()=>{cars[selected].color=['#9caeb7','#b9bec0','#7893b5','#9b9f9d','#d1d3d1','#9c88b5'][Math.floor(Math.random()*6)];garage()});
+$('resume').addEventListener('click',()=>{if(crashed){start();return}paused=false;$('pause').style.display='none';clock.getDelta()});$('garageBtn').addEventListener('click',stop);
+const keyMap={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'gas',w:'gas',ArrowDown:'brake',s:'brake'};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&running){if(crashed){start();return}paused=!paused;$('pause').style.display=paused?'flex':'none';clock.getDelta()}if(keyMap[e.key]){keys[keyMap[e.key]]=true;e.preventDefault()}});
+addEventListener('keyup',e=>{if(keyMap[e.key])keys[keyMap[e.key]]=false});
+document.querySelectorAll('.ctl').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[k]=false}))});
+addEventListener('resize',()=>{if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+try{init();garage();setCar();tick()}catch(e){console.error(e);$('error').style.display='block';$('error').textContent='Не удалось запустить 3D-графику. Открой игру в актуальном Chrome или Edge и проверь интернет. Ошибка: '+e.message}
+</script></body></html>
