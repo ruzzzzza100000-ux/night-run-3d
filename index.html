@@ -137,7 +137,8 @@ function buildCar(spec,headlights=false){
   const modelSize=modelBounds.getSize(new THREE.Vector3());
   if(modelSize.x<.25||modelSize.y<.15||modelSize.z<.25)throw new Error('Vehicle model bounds are invalid: '+modelSize.toArray());
   modelRoot.add(model);
-  modelRoot.remove(placeholder);
+  // Keep the known-good car visible until the GLB pack's nested scene transforms are verified.
+  // This prevents the player's vehicle from vanishing if a selected GLB group is malformed.
  }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
 }
