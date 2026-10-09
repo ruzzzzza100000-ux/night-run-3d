@@ -56,28 +56,42 @@ function loadVehicleModel(spec){
   const root=g.scene;root.updateMatrixWorld(true);
   const meshes=[];root.traverse(n=>{if(n.isMesh&&n.geometry)meshes.push(n);});
   if(!meshes.length){reject(new Error('GLB загружен, но не содержит мешей'));return;}
-  const keys={0:['compact'],1:['coupe'],2:['hatchback'],3:['minivan'],4:['offroad'],5:['pickup'],6:['sedan'],7:['sport'],8:['suv'],9:['wagon']}[spec.modelIndex]||[];
+  const names=['compact','coupe','hatchback','minivan','offroad','pickup','sedan','sport','suv','wagon'];
+  const wanted=names[spec.modelIndex]||'compact';
   const norm=n=>(n||'').toLowerCase().replace(/[_-]+/g,' ').trim();
   const nodes=[];root.traverse(n=>{if(n!==root&&n.children.length)nodes.push(n);});
-  // Find the named vehicle group, not its individual Body mesh.
-  let chosen=nodes.find(n=>{const name=norm(n.name);return keys.some(k=>name===k||name===k+' car'||name===k+' vehicle');});
-  if(!chosen){
-   const body=nodes.find(n=>{const name=norm(n.name);return keys.some(k=>name===k+' body'||name.startsWith(k+' body '));});
-   if(body&&body.parent&&body.parent!==root)chosen=body.parent;
+  // Asset uses named parts such as Compact_Body. Find a parent that includes the
+  // complete vehicle, not the body mesh itself.
+  const body=nodes.find(n=>norm(n.name)===wanted+' body');
+  let chosen=null;
+  if(body){
+   let p=body;
+   while(p.parent&&p.parent!==root){
+    let count=0;p.traverse(x=>{if(x.isMesh)count++;});
+    if(count>=5){chosen=p;break;}
+    p=p.parent;
+   }
   }
+  if(!chosen)chosen=nodes.find(n=>norm(n.name)===wanted||norm(n.name)===wanted+' car'||norm(n.name)===wanted+' vehicle');
   if(!chosen){
-   const ranked=nodes.map(n=>{
-    const b=new THREE.Box3().setFromObject(n),z=b.getSize(new THREE.Vector3());
-    let count=0;n.traverse(x=>{if(x.isMesh)count++;});
-    const name=norm(n.name),bad=/wheel|tire|tyre|glass|window|body|light|interior|mirror|trim/.test(name);
-    const ratio=Math.max(z.x,z.z)/Math.max(z.y,.001);
-    return {n,z,count,score:(count>=8?100:0)+(ratio>1.2&&ratio<7?20:0)+(bad?-100:0)+Math.min(z.x*z.y*z.z,100)};
-   }).filter(x=>x.count>=4&&x.z.x>.4&&x.z.y>.25&&x.z.z>.4).sort((a,b)=>b.score-a.score);
-   chosen=ranked[0]?.n||root;
+   const scored=nodes.map(n=>{
+    const b=new THREE.Box3().setFromObject(n),z=b.getSize(new THREE.Vector3());let count=0;
+    n.traverse(x=>{if(x.isMesh)count++;});
+    const name=norm(n.name);
+    return {n,z,count,score:(name.includes(wanted)?1000:0)+(count>=5?100:0)+Math.min(z.x*z.y*z.z,50)};
+   }).filter(x=>x.count>=5&&x.z.x>.4&&x.z.y>.2&&x.z.z>.4).sort((a,b)=>b.score-a.score);
+   chosen=scored[0]?.n||root;
   }
-  const b=new THREE.Box3().setFromObject(chosen),z=b.getSize(new THREE.Vector3());
-  console.info('[car pack diagnostic]',{meshes:meshes.length,requested:keys[0],selected:chosen.name,bounds:z.toArray()});
-  resolve(chosen);
+  // Convert the chosen nested group's transform to root-local space before detaching it.
+  root.updateWorldMatrix(true,true);chosen.updateWorldMatrix(true,true);
+  const relative=new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(chosen.matrixWorld);
+  const vehicle=chosen.clone(true);
+  vehicle.matrixAutoUpdate=true;
+  vehicle.applyMatrix4(relative);
+  vehicle.updateMatrixWorld(true);
+  const b=new THREE.Box3().setFromObject(vehicle),z=b.getSize(new THREE.Vector3());
+  console.info('[car pack diagnostic]',{meshCount:meshes.length,requested:wanted,selected:chosen.name,bounds:z.toArray(),parts:(()=>{let n=0;vehicle.traverse(x=>{if(x.isMesh)n++;});return n;})()});
+  resolve(vehicle);
  },undefined,reject)));
  return modelCache.get(url);
 }
@@ -119,8 +133,11 @@ function buildCar(spec,headlights=false){
   model.position.z-=center.z;
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=mats.map(m=>{const clone=m.clone();clone.side=THREE.DoubleSide;return clone;});if(!Array.isArray(o.material))o.material=o.material[0];}}});
   // Remove placeholder only after the uploaded GLB variant loads successfully.
-  modelRoot.remove(placeholder);
+  const modelBounds=new THREE.Box3().setFromObject(model);
+  const modelSize=modelBounds.getSize(new THREE.Vector3());
+  if(modelSize.x<.25||modelSize.y<.15||modelSize.z<.25)throw new Error('Vehicle model bounds are invalid: '+modelSize.toArray());
   modelRoot.add(model);
+  modelRoot.remove(placeholder);
  }).catch(err=>{console.error('Vehicle GLB failed to load:',spec.name,err);});
  return g;
 }
