@@ -30,7 +30,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id);
 const cars=[
-{name:'Grand Touring Coupe',year:'VEHICLE COLLECTION HD • CC0',type:'Coupe',color:'#aeb8c4',w:2.20,l:4.80,h:1.42,model:'grand-touring-coupe',modelUrl:'https://cdn.3dassets.dev/assets/18681/v1/model.glb'},
+{name:'City SUV HD',year:'CAR PARK FLEET • CC0',type:'SUV',color:'#397db2',w:1.933,l:4.062,h:1.64,model:'city-suv-hd',modelUrl:'https://cdn.3dassets.dev/assets/32519/v1/model.glb'},
 {name:'Executive Sedan',year:'VEHICLE COLLECTION HD • CC0',type:'Sedan',color:'#7c8fa7',w:2.27,l:5.20,h:1.57,model:'executive-sedan',modelUrl:'https://cdn.3dassets.dev/assets/18684/v1/model.glb'},
 {name:'Touring SUV',year:'VEHICLE COLLECTION HD • CC0',type:'SUV',color:'#7f898b',w:2.37,l:5.05,h:1.938,model:'touring-suv',modelUrl:'https://cdn.3dassets.dev/assets/18686/v1/model.glb'},
 {name:'Panel Delivery Van',year:'VEHICLE COLLECTION HD • CC0',type:'Van',color:'#b8b8b8',w:2.463,l:5.53,h:2.40,model:'panel-delivery-van',modelUrl:'https://cdn.3dassets.dev/assets/18680/v1/model.glb'},
@@ -60,7 +60,7 @@ const cars=[
 {name:'Kart Oopi',year:'KENNEY CC0',type:'Kart',color:'#7caa6c',w:1.1,l:2.2,h:1.0,model:'kart-oopi'},
 {name:'Kart Oozi',year:'KENNEY CC0',type:'Kart',color:'#aa7ab2',w:1.1,l:2.2,h:1.0,model:'kart-oozi'}
 ];
-let selected=2,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
+let selected=0,scene,camera,renderer,clock,player,running=false,paused=false,crashed=false,speed=0,distance=0,overtakes=0,spawn=0,steer=0;
 const keys={left:false,right:false,gas:false,brake:false};const roadWidth=15,laneW=3.75;const stripes=[],lamps=[],trees=[],traffic=[];
 const rand=(a,b)=>a+Math.random()*(b-a);
 function material(color,roughness=.5,metalness=.15,emissive=0){return new THREE.MeshStandardMaterial({color,roughness,metalness,emissive,emissiveIntensity:emissive?.3:0})}
